@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>World Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+
+    #map {
+      height: 100%;
+      width: 60%;
+      float: left;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <nav>
+    <ul>
+      <!-- This is the menu, with a home option that returns the user to the main screen with the map,
+      and 2 drop down menus to select states and countries -->
+      <li><a href="/">Map</a></li> 
+      <li class="dropdown">
+        <a href="#" class="dropbtn">States</a>
+        <div class="dropdown-content">
+            {% for state in us_states %}
+            <a href="#" {% if state.chosen %}class="highlight"{% endif %}>{{ state.name }}</a>
+            {% endfor %}
+        </div>
+      </li>
+      <li class="dropdown">
+        <a href="#" class="dropbtn">Countries</a>
+        <div class="dropdown-content">
+            {% for country in countries %}
+            <a href="#" {% if country.chosen %}class="highlight"{% endif %}>{{ country.name }}</a>
+            {% endfor %}
+        </div>
+      </li>
+    </ul>
+  </nav>
+
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script>
+    var map = L.map('map').setView([42.3750997, -41.1056157], 2);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+      maxZoom: 18,
+    }).addTo(map);
+
+    //var coordinates = {{ coordinates | tojson }};
+    //var names = {{ names | tojson }};
+    //var prices = {{ prices | tojson }};
+
+    for (var i = 0; i < coordinates.length; i++) {
+      var point = coordinates[i];
+      var marker = L.marker([point[0], point[1]]).addTo(map);
+
+      marker.on('click', function(e) {
+        var point = e.target;
+        var index = e.target.options.index;  // Add an index property to marker options
+
+        var popup = L.popup()
+          .setLatLng(point.getLatLng())
+          .setContent('Location: ' + names[index] + '<br>Price: $' + prices[index])
+          .openOn(map);
+      });
+
+      // Add an index property to marker options to store the index
+      marker.options.index = i;
+    }
+  </script>
+</body>
+</html>

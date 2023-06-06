@@ -76,7 +76,38 @@ def index():
 
     return render_template('index.html', countries=countries)
 
+def chosen_states():
+    chosen_states = [state['name'] for state in states if state['chosen']]
+    return chosen_states
 
+def chosen_countries():
+    chosen_countries = [country['name'] for country in country_list if country['chosen']]
+    return chosen_countries
+
+def query_countries_states():
+    countries = chosen_countries()
+    states = chosen_states()
+
+    conn = psycopg2.connect(
+        host = "",
+        port = "",
+        database = "",
+        user = "",
+        password = ""
+    )
+
+    cursor = conn.cursor()
+
+
+
+    query = f"Select "
+
+    results = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return results
 
 if __name__ == '__main__':
     app.run()

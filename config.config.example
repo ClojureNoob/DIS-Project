@@ -1,0 +1,7 @@
+{
+    "host": "localhost",
+    "port": "5432",
+    "db_user": "postgres",
+    "pw": "1234",
+    "db_name": "nasdaq",
+}

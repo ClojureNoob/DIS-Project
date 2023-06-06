@@ -5,31 +5,35 @@ app = Flask(__name__)
 
 @app.route('/')
 def render_map():
-    '''
+    with open('pw.config', 'r') as f:
+        pw = f.read().strip()
+
     conn = psycopg2.connect(
-    host="your_host",
-    port="your_port",
-    database="your_database",
-    user="your_username",
-    password="your_password"
+        host="localhost",	
+        port="5432",
+        database="nasdaq",
+        user="postgres",
+        password= pw,
+        options="-c client_encoding=utf8" 
     )
 
     cursor = conn.cursor()
 
     query = "SELECT lat, lon FROM companies;"
     cursor.execute(query)
-
-    # Fetch all the rows and store the coordinates
     coordinates = cursor.fetchall()
 
-    # Close the cursor and the database connection
+    query = "SELECT comp_name FROM companies;"
+    cursor.execute(query)
+    names = cursor.fetchall()
+
+    query = "SELECT symbol FROM companies;"
+    cursor.execute(query)
+    symbols = cursor.fetchall()
+
     cursor.close()
     conn.close()
-    '''
-    #test coordinates with a list of tuples (lat, lon)
-    coordinates = [(40.7128, -74.0060), (48.8566, 2.3522), (51.5074, -0.1278)]
-    names = ['New York', 'Paris', 'London']
-    prices = [100,200, 300]
+    
     return render_template('content.html',coordinates=coordinates, names=names, prices=prices)
 
 if __name__ == '__main__':
