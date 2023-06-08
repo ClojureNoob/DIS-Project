@@ -94,7 +94,7 @@ def create_portfolio_table(portfolio):
     cursor.close()
     conn.close()
 
-    
+
 
 def chosen_states():
     chosen_states = [state['name'] for state in states if state['chosen']]
