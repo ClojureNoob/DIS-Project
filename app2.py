@@ -1,21 +1,12 @@
 from flask import Flask, render_template, send_file, request
 import psycopg2
+from util import establish_connection
 
 app = Flask(__name__)
 
 @app.route('/')
 def render_map():
-    with open('pw.config', 'r') as f:
-        pw = f.read().strip()
-
-    conn = psycopg2.connect(
-        host="localhost",	
-        port="5432",
-        database="nasdaq",
-        user="postgres",
-        password= pw,
-        options="-c client_encoding=utf8" 
-    )
+    conn = establish_connection()
 
     cursor = conn.cursor()
 
@@ -34,7 +25,7 @@ def render_map():
     cursor.close()
     conn.close()
     
-    return render_template('content.html',coordinates=coordinates, names=names, prices=prices)
+    return render_template('content2.html',coordinates=coordinates, names=names)
 
 if __name__ == '__main__':
     app.run()
