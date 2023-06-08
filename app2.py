@@ -22,10 +22,13 @@ def render_map():
     cursor.execute(query)
     symbols = cursor.fetchall()
 
+    #----------Price data ------------
+    query = "SELECT date, close FROM aapl;"
+
     cursor.close()
     conn.close()
     
-    return render_template('content2.html',coordinates=coordinates, names=names)
+    return render_template('test.html',coordinates=coordinates, names=names)
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=1)
