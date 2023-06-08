@@ -1,0 +1,34 @@
+body, html {width: 100%;   height: 100%;   margin: 0;}
+    
+#container {
+  width: 100%;
+  height: 100%;}
+
+#left {
+  width: 25%;
+  height: 100%;
+  float: left;
+  border-collapse: collapse;
+  background-color: #f0f0f0;
+  text-align: center; 
+}
+        
+#map {
+  width: 50%;
+  height: 100%;
+  float: left;
+  background-color: #f0f0f0;
+  border-collapse: collapse;
+  text-align: center; 
+}
+        
+#right {  
+  width: 25%;
+  height: 100%;
+  position: relative;  
+  float: right;
+  border-collapse:collapse; 
+  background-color: #f0f0f0;
+  text-align: center; 
+}
+    
