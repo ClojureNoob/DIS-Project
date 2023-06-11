@@ -1,12 +1,14 @@
-from flask import Flask, render_template, send_file, request
+from flask import Flask, render_template, send_file, request, jsonify
 from us_states import states
 from countries import country_list
+from companies import company_list
 import psycopg2
-from util import establish_connection
+from util import establish_connection, portfolio_performance
+import datetime
+import plotly.graph_objs as go
+import plotly.offline as opy
 
 app = Flask(__name__)
-#app.config['SQLALCHEMY_DATABASE_URI'] = 'your_database_connection_string'
-#db = SQLAlchemy(app)
 
 
 
@@ -22,79 +24,86 @@ def render_map():
 
     query = "SELECT comp_name FROM companies;"
     cursor.execute(query)
-    names = cursor.fetchall()
+    names = [name[0].replace(',','') for name in cursor.fetchall()]
 
     query = "SELECT symbol FROM companies;"
     cursor.execute(query)
-    symbols = cursor.fetchall()
+    symbols = [symbol[0] for symbol in cursor.fetchall()]
+
+    #----------Price data ------------
+    query = "SELECT date, close FROM aapl;"
 
     cursor.close()
     conn.close()
-    
-    return render_template('test.html',coordinates=coordinates, names=names)
 
-@app.route('/', methods=['GET', 'POST'])
-def index():
+    graph_html,msg = portfolio_performance()
+    
+    return render_template('content.html',coordinates=coordinates, names=names,symbols=symbols, graph_html=graph_html, msg=msg, country_list=country_list, states=states, company_list=company_list) 
+
+@app.route('/update', methods=['GET', 'POST'])
+def update_chosen():
     """
-    Keeps track os states, and update their status whether they have been chosen by the user.
+    Keeps track os states, countries and companies and update their status whether they have been chosen by the user.
     """
-    us_states = [
-        states
-    ]
 
     if request.method == 'POST':
         chosen_state = request.form.get('state')
-        for state in us_states:
+        for state in states:
             if state['name'] == chosen_state:
                 state['chosen'] = True
             else:
                 state['chosen'] = False
 
-    return render_template('index.html', us_states=us_states)
-
-@app.route('/', methods=['GET', 'POST'])
-def index():
-    """
-    Keeps track of countries, and update their status whether they have been chosen by the user.
-    """
-    countries = [
-        country_list
-    ]
-
     if request.method == 'POST':
         chosen_country = request.form.get('country')
-        for country in countries:
+        for country in country_list:
             if country['name'] == chosen_country:
                 country['chosen'] = True
             else:
                 country['chosen'] = False
 
-    return render_template('index.html', countries=countries)
+    if request.method == 'POST':
+        chosen_companies = request.form.get('company')
+        for company in company_list:
+            if company['company_name'] == chosen_companies:
+                company['Chosen'] = True
+            else:
+                company['Chosen'] = False
 
-def create_portfolio_table(portfolio):
+    render_map()
+
+    return '0'
+
+
+
+
+
+def create_portfolio_table(portfolio, start_date, end_date):
+    """
+    The strategy is to first find all tags to include in the query, through all three choices
+    Then exact the date 
+    Then commit the query, filtering by date and tags
+    """
+    symbols = [row[0] for row in portfolio] # List of all symbols to extract
+
     conn = establish_connection()
     cursor = conn.cursor()
 
-    for row in portfolio:
-        symbol = row[0]
-        cursor.execute(f"SELECT date, close FROM {symbol};")
-        stock_data = cursor.fetchall()
+    # We delete the existing table if it exists
+    cursor.execute("DROP TABLE IF EXISTS portfolio;")
 
-        table_name = f"portfolio_{symbol}"
-        cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
-        cursor.execute(f"CREATE TABLE {table_name} (date DATE, close FLOAT, symbol VARCHAT(10))")
-
-        for stock_row in stock_data:
-            date = stock_row[0]
-            close = stock_row[4]
-            cursor.execute(f"INSERT INTO {table_name} (data, close, symbol) VALUES (%s, %s, %s);", (date, close, symbol))
-
-        conn.commit()
-
+    # We create a table 
+    cursor.execute(f"CREATE TABLE portfolio (symbol VARCHAR(10), start_date DATE, end_date DATE);")
+    
+    #Insert all symbols in symbols into the table with start_date and end_date
+    filtered_rows = [(symbol, start_date, end_date) for symbol in symbols]
+    cursor.executemany("INSERT INTO portfolio (symbol, start_date, end_date) VALUES (%s, %s, %s)", filtered_rows)
+    
+    conn.commit()
     cursor.close()
     conn.close()
-
-
+    
+    return None
 
 def chosen_states():
     chosen_states = [state['name'] for state in states if state['chosen']]
@@ -105,29 +114,71 @@ def chosen_countries():
     return chosen_countries
 
 def chosen_companies():
-    chosen_companies = [company['name'] for company in company_list if company['chosen']]
+    chosen_companies = [company['company_name'] for company in company_list if company['Chosen']]
     return chosen_companies
 
-def query_countries_states():
-    countries = chosen_countries()
-    states = chosen_states()
-    companies = chosen_companies()
+
+def create_table(name, content):
+    conn = establish_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(f"DROP TABLE IF EXISTS {name};")
+
+    query = f"CREATE TABLE {name} (Names TEXT);"
+
+    cursor.execute(query)
+
+    for value in content:
+        cursor.execute(f"INSERT INTO {name} (Names) VALUES ('{value}')")
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+def query_countries_states(countries, states, companies, start_date, end_date):
+    countries = chosen_countries() # list of all countries chosen
+    states = chosen_states() # list of all states chosen
+    companies = chosen_companies() # list of all companies chosen
+
+    create_table('Temp1', countries)
+    create_table('Temp2', states)
+    create_table('Temp3', companies)
 
     conn = establish_connection()
 
     cursor = conn.cursor()
 
-    query = f"SELECT symbol, comp_name, country, geo_state FROM companies Where country IN {tuple(countries)} AND geo_state IN {tuple(states)} AND comp_name IN {tuple(companies)}"
+    query = "SELECT symbol, comp_name, country, geo_state FROM companies WHERE country IN " + "(SELECT Names FROM Temp1)" + " AND geo_state IN " + "(SELECT Names FROM Temp2)" + " AND comp_name IN " + "(SELECT Names FROM Temp3)" + ";"
 
     cursor.execute(query)
-    portfolio = cursor.fetchall(query)
+    portfolio = cursor.fetchall() # Returns a list of tuples, where each tuple corresponds to a row in the database
 
-    create_portfolio_table(portfolio)
+    create_portfolio_table(portfolio, start_date, end_date)
 
+
+    conn.commit()
     cursor.close()
     conn.close()
 
     return None
 
+@app.route('/query', methods=['POST'])
+def handle_query():
+    data = request.get_json()
+
+    # Extract the necessary parameters from the data dictionary
+    countries = data.get('country')
+    states = data.get('state')
+    companies = data.get('company')
+    start_date = data.get('startDate')
+    end_date = data.get('endDate')
+
+    # Perform the query_countries_states function with the extracted parameters
+    query_countries_states(countries, states, companies, start_date, end_date)
+
+    # Return a JSON response indicating success
+    response = {'message': 'Query executed successfully'}
+    return jsonify(response)
+
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)

@@ -8,67 +8,64 @@
 <body>
   <div id="container">
     <div id="left"> <!-- Search Interface -->
-        <h2>Left</h2>
+        <h2>Search</h2>
         <form id="parameterForm">
           <label for="country">Country:</label>
-          <select id="country" name="country" multiple>
+          <select id="country" name="country" multiple onchange="handleFormChange()">
               <option value="">-- Select Country --</option>
-              {% for country in countries %}
+              {% for country in country_list %}
               {% if country.chosen %}
-              <option value="{{ country.name }}" selected>{{ country.name }}</option>
+              <option value="{{ country.name }}" class="chosen-option">{{ country.name }}</option>
               {% else %}
-              <option value="{{ country.name }}">{{ country.name }}</option>
+              <option value="{{ country.name }}" selected class="non-chosen-option">{{ country.name }}</option>
               {% endif %}
               {% endfor %}
           </select>
           
           <label for="state">State:</label>
-          <select id="state" name="state" multiple>
+          <select id="state" name="state" multiple onchange="handleFormChange()">
               <option value="">-- Select State --</option>
               {% for state in states %}
               {% if state.chosen %}
-              <option value="{{ state.name }}" selected>{{ state.name }}</option>
+              <option value="{{ state.name }}" class="chosen-option">{{ state.name }}</option>
               {% else %}
-              <option value="{{ state.name }}">{{ state.name }}</option>
+              <option value="{{ state.name }}" selected class="non-chosen-option">{{ state.name }}</option>
               {% endif %}
               {% endfor %}
           </select>
           
           <label for="company">Company:</label>
-          <select id="company" name="company" multiple>
+          <select id="company" name="company" multiple onchange="handleFormChange()">
               <option value="">-- Select Company --</option>
-              {% for company in companies %}
-              {% if company.chosen %}
-              <option value="{{ company.name }}" selected>{{ company.name }} </option>
+              {% for company in company_list %}
+              {% if company.Chosen %}
+              <option value="{{ company.company_name }}" class="chosen-option">{{ company.company_name }}</option>
               {% else %}
-              <option value="{{ company.name }}">{{ company.name }}</option>
+              <option value="{{ company.company_name }}" selected class="non-chosen-option">{{ company.company_name }}</option>
               {% endif %}
               {% endfor %}
           </select>
           
-          <label for="startDate">Start Date:</label>
-          <input type="date" id="startDate" name="startDate">
+          <label for="startDate">Buy Date:</label>
+          <input type="date" id="startDate" name="startDate" value="1962-01-01" onchange="handleFormChange()">
           
-          <label for="endDate">End Date:</label>
-          <input type="date" id="endDate" name="endDate">
+          <label for="endDate">Sell Date:</label>
+          <input type="date" id="endDate" name="endDate" value="2023-01-01" onchange="handleFormChange()">
           
-          <label for="slider">Time Frame:</label>
-          <input type="range" id="slider" name="time_frame" min="0" max="100" value="0">
-          
-          <button type="submit">Submit</button>
+          <button type="submit">Buy</button>
         </form>  
     </div>
-    <div id="map" data-coordinates="{{ coordinates | tojson }}" data-names="{{ names | tojson }}">
-      <h2>Middle</h2>
+    <div id="map" data-coordinates="{{ coordinates | tojson }}" data-names="{{names}}" data-symbols = "{{symbols}}">
   </div>
     <div id="right"> <!-- Investment portfolio -->
-        <h2>Right</h2>
+      <div id="graphContainer">{{ graph_html | safe }}</div>
     </div> 
   </div>
 
 
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="static/script.js"></script>
 </body>
 </html>

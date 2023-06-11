@@ -5,6 +5,8 @@ from util import establish_connection
 
 conn = establish_connection()
 
+print(conn.get_dsn_parameters())
+
 cursor = conn.cursor()
 
 cursor.execute("DROP TABLE IF EXISTS companies;")
@@ -19,3 +21,10 @@ cursor.execute("CREATE TABLE prices (symbol VARCHAR(10), date DATE, price FLOAT)
 
 with open('prices.csv', 'r',encoding='utf-8') as f:
     cursor.copy_expert("COPY prices FROM STDIN WITH (FORMAT CSV, HEADER 1)", f)
+conn.commit()
+
+cursor.execute("DROP TABLE IF EXISTS portfolio;")
+cursor.execute("CREATE TABLE portfolio (symbol VARCHAR(10), start_date DATE, end_date DATE);")
+conn.commit()
+cursor.close()
+conn.close()
