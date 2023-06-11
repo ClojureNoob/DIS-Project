@@ -11,3 +11,10 @@ other programs. Examples of which would be using longitude and latitude to speci
 geographical shapes, doing pattern matching, adding aditional interface options such as 
 prices, and so on. In hindsight we notice that some features could have been put into the 
 SQL database, however we failed to account for this early enough during development.
+
+Our ER diagram displays Interface, and by extension, Countries, States and Companies,
+even though they are not part of the SQL database. We choose to integrate them into
+the diagram as they serve as great tools to illustrate the functionality of our 
+application, and because we believe that our program could ( and argueably should) 
+have been made with these pieces being of the SQL database, instead of being stored 
+in Python. 
